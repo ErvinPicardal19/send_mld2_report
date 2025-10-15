@@ -14,6 +14,7 @@ all: $(APP)
 $(APP): $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 	install -m 755 -C $@ $(BIN_DIR)/$@
+	rm -rf $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

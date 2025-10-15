@@ -1,6 +1,6 @@
 include config.mk
 
-APP:=main
+APP:=send_mld2_report
 export ROOT_DIR
 export APP
 

@@ -5,10 +5,10 @@
 
 typedef enum
 {
-    DEBUG = 0,
-    INFO,
+    ERROR = 0,
     WARN,
-    ERROR,
+    INFO,
+    DEBUG,
 } level_t;
 
 void set_log_level(level_t level);

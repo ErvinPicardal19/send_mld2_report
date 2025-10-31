@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
     exec_name = argv[0];
 
-    if(argc < 2)
+    if(argc < 3)
         usage();
 
     if(geteuid() > 0)
@@ -51,37 +51,39 @@ int main(int argc, char *argv[])
         goto err_exit;
     }
 
-    for((source = strtok(argv[4], ","), i = 0); (source != NULL && i < MAX_SOURCES);
-            (source = strtok(NULL, ","), i++))
+    if(argc == 5)
     {
-        if(inet_pton(AF_INET6, source, &sources[i]) <= 0)
+        for((source = strtok(argv[4], ","), i = 0); (source != NULL && i < MAX_SOURCES);
+                (source = strtok(NULL, ","), i++))
         {
-            LOG(ERROR, "%s is not a valid AF_INET6 address", source);
-            goto err_exit;
+            if(inet_pton(AF_INET6, source, &sources[i]) <= 0)
+            {
+                LOG(ERROR, "%s is not a valid AF_INET6 address", source);
+                goto err_exit;
+            }
         }
     }
 
-    num_of_srcs = (i+1);
+    num_of_srcs = i;
 
     if(strncmp(argv[2], "BLOCK", sizeof("BLOCK")) == 0)
     {
-        LOG(INFO, "Sending MLDv2 Report type BLOCK group %s for sources %s", argv[3], argv[4]);
+        LOG(INFO, "Sending MLDv2 Report type BLOCK group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
         type =  BLOCK;
-        //send_mldv2_report(ifname, 1, &group, &source, 1);
     }
     else if(strncmp(argv[2], "ALLOW", sizeof("ALLOW")) == 0)
     {
-        LOG(INFO, "Sending MLDv2 Report type ALLOW group %s for sources %s", argv[3], argv[4]);
+        LOG(INFO, "Sending MLDv2 Report type ALLOW group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
         type =  ALLOW;
     }
     else if(strncmp(argv[2], "INCLUDE", sizeof("INCLUDE")) == 0)
     {
-        LOG(INFO, "Sending MLDv2 Report type INCLUDE group %s for sources %s", argv[3], argv[4]);
+        LOG(INFO, "Sending MLDv2 Report type INCLUDE group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
         type =  INCLUDE;
     }
     else if(strncmp(argv[2], "EXCLUDE", sizeof("EXCLUDE")) == 0)
     {
-        LOG(INFO, "Sending MLDv2 Report type EXCLUDE group %s for sources %s", argv[3], argv[4]);
+        LOG(INFO, "Sending MLDv2 Report type EXCLUDE group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
         type =  EXCLUDE;
     }
     else

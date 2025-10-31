@@ -12,7 +12,6 @@ static uint8_t is_valid_level(level_t lvl)
 
 void set_log_level(level_t level)
 {
-    LOG(INFO, "Setting LOG level=(%d)", level);
     if(is_valid_level(level))
     {
         LOG_LEVEL = level;

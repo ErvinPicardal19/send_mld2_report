@@ -5,9 +5,9 @@
 
 typedef enum
 {
-    ERROR = 0,
+    INFO = 0,
     WARN,
-    INFO,
+    ERROR,
     DEBUG,
 } level_t;
 

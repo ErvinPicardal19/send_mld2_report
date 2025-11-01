@@ -1,11 +1,11 @@
 include config.mk
 
-APP:=main
+APP:=send_mld2_report
 export ROOT_DIR
 export APP
 
 all: $(BIN_DIR)/$(APP)
-	@echo "\033[32mDone.\033[0m"
+	@/bin/echo -e "\033[32mDone.\033[0m"
 
 $(BIN_DIR)/$(APP): prepare
 	$(MAKE) -C lib/

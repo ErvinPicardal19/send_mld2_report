@@ -12,22 +12,29 @@ static char *exec_name = NULL;
 
 static void usage(void)
 {
-    fprintf(stdout, "Usage: %s <ifname> <block/allow> <group> <src>\n", exec_name);
+    fprintf(stdout,
+            "Usage: %s <ifname> <BLOCK/ALLOW/INCLUDE/EXCLUDE> <GROUP> <SOURCES>\n\n"
+            "    ex.\n"
+            "        %s eth0 ALLOW ff3e::1:1 882::1:1:1,882::2:2:2...\n"
+            ,exec_name, exec_name);
     exit(1);
 }
 
 
 int main(int argc, char *argv[])
 {
-    struct in6_addr group = {0}, src = {0};
+    int i = 0, num_of_srcs = 0;
+    struct in6_addr group = {0};
     char *ifname = NULL;
-    int fd = -1;
+    char *source = NULL;
+    struct in6_addr sources[MAX_SOURCES] = {0};
+    enum MLD2_TYPES type;
 
     set_log_level(ERROR);
 
     exec_name = argv[0];
 
-    if(argc < 2)
+    if(argc < 3)
         usage();
 
     if(geteuid() > 0)
@@ -41,26 +48,54 @@ int main(int argc, char *argv[])
     if(inet_pton(AF_INET6, argv[3], &group) <= 0)
     {
         LOG(ERROR, "%s is not a valid AF_INET6 address", argv[3]);
+        goto err_exit;
     }
 
-    if(inet_pton(AF_INET6, argv[4], &src) <= 0)
+    if(argc == 5)
     {
-        LOG(ERROR, "%s is not a valid AF_INET6 address", argv[4]);
+        for((source = strtok(argv[4], ","), i = 0); (source != NULL && i < MAX_SOURCES);
+                (source = strtok(NULL, ","), i++))
+        {
+            if(inet_pton(AF_INET6, source, &sources[i]) <= 0)
+            {
+                LOG(ERROR, "%s is not a valid AF_INET6 address", source);
+                goto err_exit;
+            }
+        }
     }
 
-    if(strncmp(argv[2], "BLOCK", 5) == 0)
+    num_of_srcs = i;
+
+    if(strncmp(argv[2], "BLOCK", sizeof("BLOCK")) == 0)
     {
-        LOG(DEBUG, "Sending MLDv2 Report type BLOCK to %s from %s", argv[3], argv[4]);
-        send_mldv2_report(ifname, 1, &group, &src, 1);
+        LOG(INFO, "Sending MLDv2 Report type BLOCK group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
+        type =  BLOCK;
+    }
+    else if(strncmp(argv[2], "ALLOW", sizeof("ALLOW")) == 0)
+    {
+        LOG(INFO, "Sending MLDv2 Report type ALLOW group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
+        type =  ALLOW;
+    }
+    else if(strncmp(argv[2], "INCLUDE", sizeof("INCLUDE")) == 0)
+    {
+        LOG(INFO, "Sending MLDv2 Report type INCLUDE group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
+        type =  INCLUDE;
+    }
+    else if(strncmp(argv[2], "EXCLUDE", sizeof("EXCLUDE")) == 0)
+    {
+        LOG(INFO, "Sending MLDv2 Report type EXCLUDE group %s for sources %s", argv[3], (argc == 5) ? argv[4] : "");
+        type =  EXCLUDE;
     }
     else
     {
-        LOG(DEBUG, "Sending MLDv2 Report type ALLOW to %s from %s", argv[3], argv[4]);
-        send_mldv2_report(ifname, 0, &group, &src, 1);
+        LOG(ERROR, "%s is not a valid MLDv2 Record Type", argv[2]);
+        goto err_exit;
     }
 
+    send_mldv2_report(ifname, type, &group, sources, num_of_srcs);
+
 exit:
-    if(fd > 0)
-        close(fd);
     return 0;
+err_exit:
+    return 1;
 }

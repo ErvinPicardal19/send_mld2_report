@@ -1,6 +1,7 @@
 #ifndef __PACKET_H__
 #define __PACKET_H__
+#include <stdio.h>
 
-void hexdump(const void *buf, const size_t len);
+char *hexdump(void *buf, size_t size);
 
 #endif//__PACKET_H__

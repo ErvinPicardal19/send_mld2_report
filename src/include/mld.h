@@ -4,6 +4,15 @@
 #include <stdint.h>
 #include <linux/in6.h>
 
+#define MAX_SOURCES 10
+
+enum MLD2_TYPES {
+    INCLUDE = 1,
+    EXCLUDE,
+    ALLOW,
+    BLOCK
+};
+
 struct ip6_mld_hopopt_hdr
 {
     uint8_t next_hdr;           // 0x3a (ICMPv6 Header)
@@ -33,6 +42,6 @@ struct icmp6_mldv2_hdr
     uint16_t num_of_rec;
 } __attribute__((packed));
 
-void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, struct in6_addr *srcs, uint16_t num_of_src);
+void send_mldv2_report(char *ifname, enum MLD2_TYPES type, struct in6_addr *group, struct in6_addr *srcs, uint16_t num_of_src);
 
 #endif//__MLD_H__

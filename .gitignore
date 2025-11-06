@@ -1,5 +1,6 @@
 bin/
+*.d
+*.o
 *.so
 *.so.*
-*.o
-*.d
+.tags

@@ -54,7 +54,7 @@ int icmpv6_checksum(void *packet, const size_t len)
     size_t icmpv6_len = (len - (sizeof(struct ip6_hdr) + sizeof(struct ip6_mld_hopopt_hdr)));
     char buf[512] = {0};
 
-    LOG(DEBUG, "ICMP len %ld", icmpv6_len);
+    //LOG(DEBUG, "ICMP len %ld", icmpv6_len);
 
     ip6_pseudo_hdr = (void *)buf;
     struct ip6_hdr *ip6_hdr = (struct ip6_hdr *)packet;
@@ -70,7 +70,7 @@ int icmpv6_checksum(void *packet, const size_t len)
 
     memcpy(((char *)buf + sizeof(*ip6_pseudo_hdr)), icmp6_hdr, icmpv6_len);
 
-    hexdump(buf, (sizeof(*ip6_pseudo_hdr) + icmpv6_len));
+    //hexdump(buf, (sizeof(*ip6_pseudo_hdr) + icmpv6_len));
     return compute_checksum((void *)buf, (sizeof(*ip6_pseudo_hdr) + icmpv6_len));
 }
 
@@ -103,7 +103,7 @@ int get_ip6addr_by_name(char *ifname, struct in6_addr *ip6)
     return -1;
 }
 
-void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, struct in6_addr *srcs, uint16_t num_of_src)
+void send_mldv2_report(char *ifname, enum MLD2_TYPES type, struct in6_addr *group, struct in6_addr *srcs, uint16_t num_of_src)
 {
     struct
     {
@@ -115,6 +115,7 @@ void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, stru
     struct mldv2_record *mld_record;
     struct in6_addr *src;
     char buf[1024] = {0};
+    char addr6[INET6_ADDRSTRLEN] = {0};
     int payload_len = 0;
     int fd = -1;
     struct sockaddr_in6 dst = {0};
@@ -134,7 +135,7 @@ void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, stru
     hdr->hopopt_hdr.pad_type = 0x01;
 
     hdr->mldv2_hdr.type = ICMPV6_MLD2_REPORT;
-    hdr->mldv2_hdr.num_of_rec = htons(0x0001);
+    hdr->mldv2_hdr.num_of_rec = htons(0x0001); // Only 1 record for now
 
     mld_record = (struct mldv2_record *)hdr->mld_records;
     for(int i = 0; i < 1; i++)
@@ -149,7 +150,21 @@ void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, stru
         payload_len += mld_len;
 
         mld_record += i;
-        mld_record->rec_type = (block == 1) ? MLD2_BLOCK_OLD_SOURCES : MLD2_ALLOW_NEW_SOURCES;
+        switch(type)
+        {
+            case INCLUDE:
+                mld_record->rec_type = MLD2_CHANGE_TO_INCLUDE;
+                break;
+            case EXCLUDE:
+                mld_record->rec_type = MLD2_CHANGE_TO_EXCLUDE;
+                break;
+            case ALLOW:
+                mld_record->rec_type = MLD2_ALLOW_NEW_SOURCES;
+                break;
+            case BLOCK:
+                mld_record->rec_type = MLD2_BLOCK_OLD_SOURCES;
+                break;
+        }
         mld_record->aux_data_len = 0;
         mld_record->num_of_src = htons(num_of_src);
         memcpy(&mld_record->group, group, sizeof(struct in6_addr));
@@ -163,12 +178,10 @@ void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, stru
     }
 
     hdr->ip6_hdr.ip6_plen = htons(payload_len);
-
     hdr->mldv2_hdr.checksum = htons(icmpv6_checksum(buf, (sizeof(struct ip6_hdr) + payload_len)));
-    //LOG(DEBUG, "Checksum: %0x", hdr->mldv2_hdr.checksum);
 
     LOG(DEBUG, "Packet: ");
-    hexdump(buf, (sizeof(struct ip6_hdr) + payload_len));
+    LOG(DEBUG, "%s", hexdump(buf, (sizeof(struct ip6_hdr) + payload_len)));
 
     fd = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
     if(fd < 0)
@@ -177,7 +190,6 @@ void send_mldv2_report(char *ifname, uint8_t block, struct in6_addr *group, stru
     }
 
     dst.sin6_family = AF_INET6;
-    char addr6[INET6_ADDRSTRLEN] = {0};
     memcpy(&dst.sin6_addr, &hdr->ip6_hdr.ip6_dst, sizeof(struct in6_addr));
     inet_ntop(AF_INET6, &dst.sin6_addr, addr6, INET6_ADDRSTRLEN);
     dst.sin6_scope_id = if_nametoindex(ifname);

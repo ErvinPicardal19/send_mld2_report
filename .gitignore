@@ -3,4 +3,5 @@ bin/
 *.o
 *.so
 *.so.*
+*.clangd
 .tags

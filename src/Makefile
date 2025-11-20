@@ -18,9 +18,12 @@ $(APP): $(OBJECTS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+clangd:
+	@echo $(CFLAGS)
+
 clean:
 	rm -rf *.o *.d $(APP)
 
 -include $(DEPENDS)
 
-.PHONY: all clean
+.PHONY: all clean clangd

@@ -28,9 +28,11 @@ $(LIB): $(OBJECTS)
 %.o: %.c
 	gcc $(CFLAGS) -c $< -o $@
 
+clangd:
+
 clean:
 	rm -rf $(OBJECTS) $(DEPENDS) $(LIBNAME)*
 
 -include $(DEPENDS)
 
-.PHONY: all clean
+.PHONY: all clean clangd

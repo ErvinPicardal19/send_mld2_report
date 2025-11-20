@@ -4,7 +4,7 @@ APP:=send_mld2_report
 export ROOT_DIR
 export APP
 
-CFLAGS:= $(shell $(MAKE) -s -C src/ clangd)
+CFLAGS:= $(shell $(MAKE) -s -C src/ clangd ROOT_DIR="$(ROOT_DIR)")
 CLANGD_CFLAGS:=$(foreach f,$(CFLAGS),"$(f)",)
 
 all: $(BIN_DIR)/$(APP)

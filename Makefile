@@ -4,9 +4,6 @@ APP:=send_mld2_report
 export ROOT_DIR
 export APP
 
-CFLAGS:= $(shell $(MAKE) -s -C src/ clangd ROOT_DIR="$(ROOT_DIR)")
-CLANGD_CFLAGS:=$(foreach f,$(CFLAGS),"$(f)",)
-
 all: $(BIN_DIR)/$(APP)
 	@/bin/echo -e "\033[32mDone.\033[0m"
 
@@ -19,14 +16,9 @@ prepare: $(BIN_DIR)
 $(BIN_DIR):
 	@mkdir -pv $@
 
-clangd:
-	echo "CompileFlags:" > .clangd
-	echo "  Add: [ $(CLANGD_CFLAGS) ]" >> .clangd
-
-
 clean:
-	make -C src/ clean
-	make -C lib/ clean
+	$(MAKE) -C src/ clean
+	$(MAKE) -C lib/ clean
 	rm -rf $(BIN_DIR)
 
-.PHONY: $(SUBDIRS) all clean prepare clangd
+.PHONY: $(SUBDIRS) all clean prepare

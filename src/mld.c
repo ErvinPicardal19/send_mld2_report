@@ -127,7 +127,8 @@ void send_mldv2_report(char *ifname, enum MLD2_TYPES type, struct in6_addr *grou
     hdr->ip6_hdr.ip6_nxt = IPPROTO_HOPOPTS;
     hdr->ip6_hdr.ip6_hlim = 1;
     get_ip6addr_by_name(ifname, &hdr->ip6_hdr.ip6_src);
-    inet_pton(AF_INET6, "ff02::16", &hdr->ip6_hdr.ip6_dst);
+    //inet_pton(AF_INET6, "ff02::16", &hdr->ip6_hdr.ip6_dst);
+    memcpy(&hdr->ip6_hdr.ip6_dst, group, sizeof(struct in6_addr));
 
     hdr->hopopt_hdr.next_hdr = IPPROTO_ICMPV6;
     hdr->hopopt_hdr.rtr_alert_type = IPV6_TLV_ROUTERALERT;
